@@ -337,19 +337,19 @@ export type mirrorFragmentTypeRec<Fragment, Data> = Fragment extends (infer Valu
         ? undefined
         : Data;
 
-type fragmentRefsOfFragmentsRec<Fragments extends readonly any[]> = Fragments extends readonly [
-  infer Fragment,
-  ...infer Rest,
-]
-  ? obj<makeFragmentRef<Fragment> & fragmentRefsOfFragmentsRec<Rest>>
-  : {};
+type fragmentRefsOfFragmentsRec<
+  Fragments extends readonly any[],
+  IntersectionAccumulator = {},
+> = Fragments extends readonly [infer Fragment, ...infer Rest]
+  ? obj<fragmentRefsOfFragmentsRec<Rest, makeFragmentRef<Fragment> & IntersectionAccumulator>>
+  : IntersectionAccumulator;
 
-type resultOfFragmentsRec<Fragments extends readonly any[]> = Fragments extends readonly [
-  infer Fragment,
-  ...infer Rest,
-]
-  ? ResultOf<Fragment> & resultOfFragmentsRec<Rest>
-  : {};
+type resultOfFragmentsRec<
+  Fragments extends readonly any[],
+  IntersectionAccumulator = {},
+> = Fragments extends readonly [infer Fragment, ...infer Rest]
+  ? resultOfFragmentsRec<Rest, ResultOf<Fragment> & IntersectionAccumulator>
+  : IntersectionAccumulator;
 
 type fragmentOfTypeRec<Document extends makeDefinitionDecoration> =
   | readonly fragmentOfTypeRec<Document>[]

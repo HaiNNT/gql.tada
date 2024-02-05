@@ -81,27 +81,41 @@ type unwrapTypeRef<Type, Introspection extends IntrospectionLikeType> = Type ext
   ? _unwrapTypeRefRec<Type['type'], Introspection>
   : null | _unwrapTypeRefRec<Type, Introspection>;
 
-type getVariablesRec<Variables, Introspection extends IntrospectionLikeType> = Variables extends [
-  infer Variable,
-  ...infer Rest,
-]
-  ? (Variable extends { kind: Kind.VARIABLE_DEFINITION; variable: any; type: any }
-      ? Variable extends { defaultValue: undefined; type: { kind: Kind.NON_NULL_TYPE } }
-        ? {
-            [Name in Variable['variable']['name']['value']]: unwrapTypeRef<
-              Variable['type'],
-              Introspection
-            >;
+type getVariablesRec<
+  Variables,
+  Introspection extends IntrospectionLikeType,
+  IntersectionAccumulator = {},
+> = Variables extends [infer Variable, ...infer Rest]
+  ? getVariablesRec<
+      Rest,
+      Introspection,
+      (Variable extends {
+        kind: Kind.VARIABLE_DEFINITION;
+        variable: any;
+        type: any;
+      }
+        ? Variable extends {
+            defaultValue: undefined;
+            type: {
+              kind: Kind.NON_NULL_TYPE;
+            };
           }
-        : {
-            [Name in Variable['variable']['name']['value']]?: unwrapTypeRef<
-              Variable['type'],
-              Introspection
-            >;
-          }
-      : {}) &
-      getVariablesRec<Rest, Introspection>
-  : {};
+          ? {
+              [Name in Variable['variable']['name']['value']]: unwrapTypeRef<
+                Variable['type'],
+                Introspection
+              >;
+            }
+          : {
+              [Name in Variable['variable']['name']['value']]?: unwrapTypeRef<
+                Variable['type'],
+                Introspection
+              >;
+            }
+        : {}) &
+        IntersectionAccumulator
+    >
+  : IntersectionAccumulator;
 
 type getVariablesType<
   Document extends DocumentNodeLike,
